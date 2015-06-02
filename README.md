@@ -28,7 +28,7 @@ var clusters = dbscan.run(dataset, 5, 2);
 console.log(clusters, dbscan.noise);
 
 // OUTPUT
-// [ [ 0, 1, 2 ], [ 3, 5, 4 ], [ 6, 9, 7 ], [ 8 ] ] [ 8 ]
+//  [ [ 0, 1, 2 ], [ 3, 5, 4 ], [ 6, 9, 7 ] ]
 ```
 
 ### OPTICS with kd-tree
