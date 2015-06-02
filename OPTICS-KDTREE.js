@@ -1,5 +1,5 @@
-var PriorityQueue = require('./PriorityQueue.js');
-
+var PriorityQueue = require('density-clustering').PriorityQueue;
+var createKDTree = require("static-kdtree");
 /**
  * OPTICS - Ordering points to identify the clustering structure
  *
@@ -17,7 +17,7 @@ var PriorityQueue = require('./PriorityQueue.js');
  * @param {function} distanceFunction
  * @returns {OPTICS}
  */
-var createKDTree = require("static-kdtree");
+
 function OPTICS(dataset, epsilon, minPts, distanceFunction) {
     this.tree = null;
     /** @type {number} */
