@@ -159,9 +159,10 @@ DBSCAN.prototype._regionQuery = function(pointId) {
         if ((pointId !== id) && this.distance(this.dataset[pointId], this.dataset[id]) < this.epsilon)
             neighbors.push(id);
     }*/
+
     var dataset = this.dataset;
     this.tree.rnn(this.dataset[pointId],this.epsilon,function(idx){
-        neighbors.push(dataset[idx]);
+        neighbors.push(idx);
     });
     return neighbors;
 };

@@ -1,6 +1,6 @@
 {
   "name": "density-clustering-kdtree-doping",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Doping for https://www.npmjs.com/package/density-clustering",
   "main": "index.js",
   "scripts": {
@@ -17,12 +17,13 @@
     "clustering"
   ],
   "author": "Shohei Yokoyama",
-  "license": "MIT License",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/abarth500/density-clustering-kdtree-doping/issues"
   },
   "homepage": "https://github.com/abarth500/density-clustering-kdtree-doping",
   "dependencies": {
-    "density-clustering": "~1.2.0"
+    "density-clustering": "^1.2.0",
+    "static-kdtree": "^1.0.1"
   }
 }

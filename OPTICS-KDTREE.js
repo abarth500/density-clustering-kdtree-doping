@@ -1,4 +1,4 @@
-var PriorityQueue = require('./PriorityQueue.js');
+var PriorityQueue = require('density-clustering').PriorityQueue;
 
 /**
  * OPTICS - Ordering points to identify the clustering structure
@@ -231,7 +231,7 @@ OPTICS.prototype._regionQuery = function(pointId) {
     */
     var dataset = this.dataset;
     this.tree.rnn(this.dataset[pointId],this.epsilon,function(idx){
-        neighbors.push(dataset[idx]);
+        neighbors.push(idx);
     });
 
     return neighbors;
