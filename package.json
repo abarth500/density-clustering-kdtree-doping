@@ -1,10 +1,10 @@
 {
   "name": "density-clustering-kdtree-doping",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Doping for https://www.npmjs.com/package/density-clustering",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test/DBSCAN.js"
   },
   "repository": {
     "type": "git",
