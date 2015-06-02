@@ -154,12 +154,12 @@ DBSCAN.prototype._expandCluster = function(clusterId, neighbors) {
  */
 DBSCAN.prototype._regionQuery = function(pointId) {
     var neighbors = [];
-    var dataset = this.dataset;
     /*
     for (var id = 0, l = this.dataset.length; id < l; id++) {
         if ((pointId !== id) && this.distance(this.dataset[pointId], this.dataset[id]) < this.epsilon)
             neighbors.push(id);
     }*/
+    var dataset = this.dataset;
     this.tree.rnn(this.dataset[pointId],this.epsilon,function(idx){
         neighbors.push(dataset[idx]);
     });

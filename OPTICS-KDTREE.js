@@ -17,6 +17,7 @@ var PriorityQueue = require('./PriorityQueue.js');
  * @param {function} distanceFunction
  * @returns {OPTICS}
  */
+var createKDTree = require("static-kdtree");
 function OPTICS(dataset, epsilon, minPts, distanceFunction) {
     /** @type {number} */
     this.epsilon = 1;
@@ -35,7 +36,7 @@ function OPTICS(dataset, epsilon, minPts, distanceFunction) {
     this._orderedList = [];
 
     if(typeof distanceFunction != "undefined"){
-        throw new Error("distanceFunction is not supported for this KD-Tree based DBSCAN.");
+        throw new Error("distanceFunction is not supported for this KD-Tree based DBOPTICSSCAN.");
     }
     this._init(dataset, epsilon, minPts, distanceFunction);
 }
@@ -112,7 +113,7 @@ OPTICS.prototype._init = function(dataset, epsilon, minPts, distanceFunction) {
             throw Error('Dataset must be of type array, ' + typeof dataset + ' given');
             return;
         }
-
+        this.tree = createKDTree(dataset);
         this.dataset = dataset;
         this.clusters = [];
         this._reachability = new Array(this.dataset.length);
@@ -222,10 +223,16 @@ OPTICS.prototype._distanceToCore = function(pointId, neighbors) {
 OPTICS.prototype._regionQuery = function(pointId) {
     var neighbors = [];
 
+    /*
     for (var id = 0, l = this.dataset.length; id < l; id++) {
         if (pointId !== id && this.distance(this.dataset[pointId], this.dataset[id]) < this.epsilon)
             neighbors.push(id);
     }
+    */
+    var dataset = this.dataset;
+    this.tree.rnn(this.dataset[pointId],this.epsilon,function(idx){
+        neighbors.push(dataset[idx]);
+    });
 
     return neighbors;
 };
