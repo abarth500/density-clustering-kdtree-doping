@@ -1,4 +1,4 @@
-var PriorityQueue = require('density-clustering').PriorityQueue;
+var PriorityQueue = require('./PriorityQueue.js');
 
 /**
  * OPTICS - Ordering points to identify the clustering structure
@@ -6,11 +6,11 @@ var PriorityQueue = require('density-clustering').PriorityQueue;
  * @author Lukasz Krawczyk <contact@lukaszkrawczyk.eu>
  * @copyright MIT
  */
- 
+
 /**
  * OPTICS class constructor
  * @constructor
- * 
+ *
  * @param {Array} dataset
  * @param {number} epsilon
  * @param {number} minPts
@@ -19,13 +19,16 @@ var PriorityQueue = require('density-clustering').PriorityQueue;
  */
 var createKDTree = require("static-kdtree");
 function OPTICS(dataset, epsilon, minPts, distanceFunction) {
+    this.tree = null;
     /** @type {number} */
     this.epsilon = 1;
     /** @type {number} */
-    this.minPts = 1;   
+    this.minPts = 1;
     /** @type {function} */
     this.distance = this._euclideanDistance;
-    
+
+    // temporary variables used during computation
+
     /** @type {Array} */
     this._reachability = [];
     /** @type {Array} */
@@ -35,9 +38,6 @@ function OPTICS(dataset, epsilon, minPts, distanceFunction) {
     /** @type {Array} */
     this._orderedList = [];
 
-    if(typeof distanceFunction != "undefined"){
-        throw new Error("distanceFunction is not supported for this KD-Tree based DBOPTICSSCAN.");
-    }
     this._init(dataset, epsilon, minPts, distanceFunction);
 }
 
@@ -62,10 +62,10 @@ OPTICS.prototype.run = function(dataset, epsilon, minPts, distanceFunction) {
 
             this._orderedList.push(pointId);
             var priorityQueue = new PriorityQueue(null, null, 'asc');
-            var neighbors = this._regionQuery(pointId);   
+            var neighbors = this._regionQuery(pointId);
 
             // using priority queue assign elements to new cluster
-            if (this._distanceToCore(pointId, neighbors) !== undefined) {
+            if (this._distanceToCore(pointId) !== undefined) {
                 this._updateQueue(pointId, neighbors, priorityQueue);
                 this._expandCluster(clusterId, priorityQueue);
             }
@@ -85,8 +85,9 @@ OPTICS.prototype.getReachabilityPlot = function() {
     var reachabilityPlot = [];
 
     for (var i = 0, l = this._orderedList.length; i < l; i++) {
-        var pointId = this._orderedList[i]
-           , distance = this._reachability[pointId];
+        var pointId = this._orderedList[i];
+        var distance = this._reachability[pointId];
+
         reachabilityPlot.push([pointId, distance]);
     }
 
@@ -102,16 +103,17 @@ OPTICS.prototype.getReachabilityPlot = function() {
  * @param {Array} dataset
  * @param {number} epsilon
  * @param {number} minPts
- * @param {function} distanceFunction
+ * @param {function} distance
  * @returns {undefined}
  * @access protected
  */
-OPTICS.prototype._init = function(dataset, epsilon, minPts, distanceFunction) {
+OPTICS.prototype._init = function(dataset, epsilon, minPts, distance) {
+
     if (dataset) {
 
         if (!(dataset instanceof Array)) {
-            throw Error('Dataset must be of type array, ' + typeof dataset + ' given');
-            return;
+            throw Error('Dataset must be of type array, ' +
+            typeof dataset + ' given');
         }
         this.tree = createKDTree(dataset);
         this.dataset = dataset;
@@ -122,11 +124,18 @@ OPTICS.prototype._init = function(dataset, epsilon, minPts, distanceFunction) {
         this._orderedList = [];
     }
 
-    if (epsilon) this.epsilon = epsilon;
-    if (minPts) this.minPts = minPts;
-    if (distanceFunction) this.distance = distanceFunction;
+    if (epsilon) {
+        this.epsilon = epsilon;
+    }
+
+    if (minPts) {
+        this.minPts = minPts;
+    }
+
+    if (distance) {
+        this.distance = distance;
+    }
 };
-    
 
 /**
  * Update information in queue
@@ -140,10 +149,11 @@ OPTICS.prototype._init = function(dataset, epsilon, minPts, distanceFunction) {
 OPTICS.prototype._updateQueue = function(pointId, neighbors, queue) {
     var self = this;
 
-    this._coreDistance = this._distanceToCore(pointId, neighbors);
+    this._coreDistance = this._distanceToCore(pointId);
     neighbors.forEach(function(pointId2) {
         if (self._processed[pointId2] === undefined) {
-            var newReachableDistance = Math.max(self._coreDistance, self.distance(self.dataset[pointId], self.dataset[pointId2]));
+            var dist = self.distance(self.dataset[pointId], self.dataset[pointId2]);
+            var newReachableDistance = Math.max(self._coreDistance, dist);
 
             if (self._reachability[pointId2] === undefined) {
                 self._reachability[pointId2] = newReachableDistance;
@@ -158,7 +168,7 @@ OPTICS.prototype._updateQueue = function(pointId, neighbors, queue) {
         }
     });
 };
-    
+
 /**
  * Expand cluster
  *
@@ -186,74 +196,74 @@ OPTICS.prototype._expandCluster = function(clusterId, queue) {
         }
     }
 };
-    
+
 /**
  * Calculating distance to cluster core
  *
  * @param {number} pointId
- * @param {Array} neighbors
  * @returns {number}
  * @access protected
  */
-OPTICS.prototype._distanceToCore = function(pointId, neighbors) {
-    var self = this
-        , minDistance = undefined;
-
-    if (!neighbors) neighbors = this._regionQuery(pointId);
-
-    // core-point should have got at least minPts-Points
-    if (neighbors.length >= this.minPts) {
-        var minDistance = this.epsilon;
-        neighbors.forEach(function(pointId2) {
-            var dist = self.distance(self.dataset[pointId], self.dataset[pointId2]);
-            if (dist < minDistance) minDistance = dist;
-        });
+OPTICS.prototype._distanceToCore = function(pointId) {
+    var l = this.epsilon;
+    for (var coreDistCand = 0; coreDistCand < l; coreDistCand++) {
+        var neighbors = this._regionQuery(pointId, coreDistCand);
+        if (neighbors.length >= this.minPts) {
+            return coreDistCand;
+        }
     }
 
-    return minDistance;
+    return;
 };
 
 /**
  * Find all neighbors around given point
  *
  * @param {number} pointId
+ * @param {number} epsilon
  * @returns {Array}
  * @access protected
  */
-OPTICS.prototype._regionQuery = function(pointId) {
+OPTICS.prototype._regionQuery = function(pointId, epsilon) {
+    epsilon = epsilon || this.epsilon;
     var neighbors = [];
-
     /*
     for (var id = 0, l = this.dataset.length; id < l; id++) {
-        if (pointId !== id && this.distance(this.dataset[pointId], this.dataset[id]) < this.epsilon)
+        if (this.distance(this.dataset[pointId], this.dataset[id]) < epsilon) {
             neighbors.push(id);
+        }
     }
     */
-    var dataset = this.dataset;
-    this.tree.rnn(this.dataset[pointId],this.epsilon,function(idx){
-        neighbors.push(idx);
+    this.tree.rnn(this.dataset[pointId],epsilon,function(id){
+        if(pointId != id) {
+            neighbors.push(id);
+        }
     });
-
     return neighbors;
 };
-    
+
 /******************************************************************************/
 // helpers
 
 /**
  * Calculate euclidean distance in multidimensional space
- * 
+ *
  * @param {Array} p
  * @param {Array} q
  * @returns {number}
  * @access protected
- */   
+ */
 OPTICS.prototype._euclideanDistance = function(p, q) {
-    var sum = 0
-        , i = Math.min(p.length, q.length);
-    while (i--) sum += (p[i] - q[i]) * (p[i] - q[i]);
+    var sum = 0;
+    var i = Math.min(p.length, q.length);
+
+    while (i--) {
+        sum += (p[i] - q[i]) * (p[i] - q[i]);
+    }
+
     return Math.sqrt(sum);
 };
 
-if (typeof module !== 'undefined')
+if (typeof module !== 'undefined') {
     module.exports = OPTICS;
+}
