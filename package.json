@@ -1,6 +1,6 @@
 {
   "name": "density-clustering-kdtree-doping",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Doping for https://www.npmjs.com/package/density-clustering",
   "main": "index.js",
   "scripts": {
